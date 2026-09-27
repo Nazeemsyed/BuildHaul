@@ -1,0 +1,6 @@
+{
+  "name": "BuildHaul - Construction Vehicle Marketplace",
+  "description": "The right machine. The right site. The right time. Connects contractors with owners of heavy trucks, tractors, mini trucks, loaders, and tippers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
