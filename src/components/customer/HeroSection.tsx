@@ -16,7 +16,13 @@ import {
 import { VehicleType } from '../../types';
 
 export const HeroSection: React.FC = () => {
-  const { setActiveTab, setHeroSearchFilters } = useApp();
+  const { 
+    setActiveTab, 
+    setHeroSearchFilters, 
+    currentUser, 
+    setIsAuthModalOpen, 
+    setAuthModalMode 
+  } = useApp();
 
   const [location, setLocation] = useState('Vijayawada');
   const [vehicleType, setVehicleType] = useState<string>('All');
@@ -78,6 +84,35 @@ export const HeroSection: React.FC = () => {
           <p className="text-base sm:text-lg text-neutral-300 font-normal max-w-2xl leading-relaxed">
             Find the right truck, tractor, or construction vehicle near you. Verified commercial fleets, transparent day rates, and verified machine operators on demand.
           </p>
+
+          {!currentUser && (
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('signup');
+                  setIsAuthModalOpen(true);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+              >
+                <span>Get Started / Sign Up</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-white font-medium text-xs sm:text-sm transition-all cursor-pointer"
+              >
+                Sign In
+              </button>
+              <span className="text-xs text-neutral-400 hidden sm:inline">
+                ⚡ Real-time machinery bookings & verified fleets
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Large Search Component */}

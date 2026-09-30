@@ -20,11 +20,12 @@ import {
   INITIAL_NOTIFICATIONS 
 } from '../data/mockData';
 import { FirestoreService } from '../services/firestoreService';
+import { auth, onAuthStateChanged, FirebaseUser } from '../lib/firebase';
 
 // Local storage helper keys
 const STORAGE_KEYS = {
   USERS: 'buildhaul_users_v2',
-  CURRENT_USER: 'buildhaul_session_user_v2',
+  CURRENT_USER: 'buildhaul_session_user_v3',
   VEHICLES: 'buildhaul_vehicles_v2',
   BOOKINGS: 'buildhaul_bookings_v2',
   PROJECTS: 'buildhaul_projects_v2',
@@ -160,7 +161,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Persistent data initialization
   const [users, setUsers] = useState<User[]>(() => getStoredItem(STORAGE_KEYS.USERS, INITIAL_USERS));
-  const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredItem(STORAGE_KEYS.CURRENT_USER, INITIAL_USERS[0]));
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredItem<User | null>(STORAGE_KEYS.CURRENT_USER, null));
   const [userRole, setUserRole] = useState<UserRole>(() => currentUser?.role || 'customer');
   const [activeTab, setActiveTab] = useState<string>('home');
   
@@ -229,6 +230,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStoredItem(STORAGE_KEYS.NOTIFICATIONS, notifications);
   }, [notifications]);
 
+  // Trigger login or signup process when visitor opens the website and is not logged in
+  useEffect(() => {
+    const savedUser = getStoredItem<User | null>(STORAGE_KEYS.CURRENT_USER, null);
+    if (!savedUser) {
+      setAuthNoticeMessage('Welcome to BuildHaul! Please sign in or create an account to start booking machinery.');
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+    }
+  }, []);
+
+  // Sync with Firebase Auth state (e.g. for Google Sign-In)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        setUsers(prev => {
+          const existing = prev.find(u => u.email.toLowerCase() === fbUser.email?.toLowerCase() || u.id === fbUser.uid);
+          if (existing) {
+            setCurrentUser(existing);
+            setUserRole(existing.role);
+          } else {
+            const newUser: User = {
+              id: fbUser.uid,
+              name: fbUser.displayName || 'Contractor',
+              email: fbUser.email || '',
+              phone: fbUser.phoneNumber || '+91 98480 23114',
+              role: 'customer',
+              avatar: fbUser.photoURL || undefined,
+              isVerified: true,
+              createdAt: new Date().toISOString().split('T')[0]
+            };
+            setCurrentUser(newUser);
+            setUserRole('customer');
+            return [...prev, newUser];
+          }
+          return prev;
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Sync & Seed with Firestore on mount
   useEffect(() => {
     const syncFromFirestore = async () => {
@@ -284,6 +326,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserRole('customer');
     setActiveTab('home');
     setStoredItem(STORAGE_KEYS.CURRENT_USER, null);
+    setAuthNoticeMessage('You have logged out. Sign in or register to continue managing machinery.');
+    setAuthModalMode('login');
+    setIsAuthModalOpen(true);
   };
 
   const switchRole = (role: UserRole) => {

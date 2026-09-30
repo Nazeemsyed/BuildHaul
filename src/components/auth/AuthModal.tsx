@@ -267,7 +267,27 @@ export const AuthModal: React.FC = () => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Action Notice if triggered by booking */}
+        {/* Brand Header */}
+        <div className="flex items-center gap-3 mb-5 pr-8">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm shrink-0">
+            <Truck className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-white tracking-tight">
+                Build<span className="text-amber-400">Haul</span> Portal
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20 font-medium">
+                Live Network
+              </span>
+            </div>
+            <p className="text-xs text-neutral-400">
+              Sign in or create your account to book machinery & fleets
+            </p>
+          </div>
+        </div>
+
+        {/* Action Notice if triggered by booking or site load */}
         {authNoticeMessage && !isOtpStep && (
           <div className="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
             <Truck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -698,6 +718,24 @@ export const AuthModal: React.FC = () => {
               {loginMethod === 'otp' ? 'Sign In with OTP' : 'Sign In'}
             </button>
           </form>
+        )}
+
+        {/* Guest Explorer Option */}
+        {!isOtpStep && (
+          <div className="mt-5 pt-4 border-t border-neutral-800 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAuthModalOpen(false);
+                setAuthNoticeMessage(null);
+                resetForm();
+              }}
+              className="text-xs text-neutral-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Or explore machinery marketplace as guest</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         )}
 
       </div>

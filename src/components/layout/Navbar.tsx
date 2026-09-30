@@ -28,6 +28,7 @@ export const Navbar: React.FC = () => {
     setIsNotificationDrawerOpen, 
     setIsAuthModalOpen, 
     setAuthModalMode,
+    setAuthNoticeMessage,
     setIsProfileModalOpen,
     compareVehicleIds,
     setIsCompareModalOpen
@@ -40,6 +41,13 @@ export const Navbar: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleNavClick = (tab: string) => {
+    if ((tab === 'bookings' || tab === 'projects' || tab === 'dashboard' || tab === 'admin') && !currentUser) {
+      setAuthNoticeMessage(`Please sign in or create an account to access ${tab === 'bookings' ? 'your machinery bookings' : tab === 'projects' ? 'infrastructure projects' : 'your dashboard'}.`);
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      setMobileMenuOpen(false);
+      return;
+    }
     setActiveTab(tab);
     setMobileMenuOpen(false);
   };
@@ -305,16 +313,41 @@ export const Navbar: React.FC = () => {
           >
             {userRole === 'admin' ? 'Admin Panel' : userRole === 'owner' ? 'Owner Dashboard' : 'Dashboard'}
           </button>
-          <button 
-            onClick={() => {
-              setIsProfileModalOpen(true);
-              setMobileMenuOpen(false);
-            }} 
-            className="w-full flex items-center gap-2 text-left py-2 px-3 rounded-lg text-sm text-neutral-300"
-          >
-            <UserIcon className="w-4 h-4" />
-            Profile & Settings
-          </button>
+          {currentUser ? (
+            <button 
+              onClick={() => {
+                setIsProfileModalOpen(true);
+                setMobileMenuOpen(false);
+              }} 
+              className="w-full flex items-center gap-2 text-left py-2 px-3 rounded-lg text-sm text-neutral-300 hover:text-white"
+            >
+              <UserIcon className="w-4 h-4 text-amber-400" />
+              <span>Profile & Settings ({currentUser.name})</span>
+            </button>
+          ) : (
+            <div className="pt-2 border-t border-neutral-800 flex gap-2">
+              <button 
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }} 
+                className="flex-1 py-2 text-center rounded-lg text-xs font-semibold bg-neutral-900 border border-neutral-800 text-white hover:bg-neutral-800 transition-colors"
+              >
+                Log In
+              </button>
+              <button 
+                onClick={() => {
+                  setAuthModalMode('signup');
+                  setIsAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }} 
+                className="flex-1 py-2 text-center rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-neutral-950 transition-colors"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
         </div>
       )}
 

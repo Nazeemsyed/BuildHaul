@@ -28,6 +28,8 @@ export const defaultDb = getFirestore(app);
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export { onAuthStateChanged };
+export type { FirebaseUser };
 
 export const signInWithGoogle = async () => {
   try {
