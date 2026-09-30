@@ -245,7 +245,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         setUsers(prev => {
-          const existing = prev.find(u => u.email.toLowerCase() === fbUser.email?.toLowerCase() || u.id === fbUser.uid);
+          const existing = prev.find(u => (u.email && fbUser.email && u.email.toLowerCase() === fbUser.email.toLowerCase()) || u.id === fbUser.uid);
           if (existing) {
             setCurrentUser(existing);
             setUserRole(existing.role);

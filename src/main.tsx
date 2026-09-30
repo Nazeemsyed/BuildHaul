@@ -132,11 +132,28 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  createRoot(rootElement).render(
-    <StrictMode>
-      <RootErrorBoundary>
-        <App />
-      </RootErrorBoundary>
-    </StrictMode>,
-  );
+  try {
+    const root = createRoot(rootElement);
+    root.render(
+      <StrictMode>
+        <RootErrorBoundary>
+          <App />
+        </RootErrorBoundary>
+      </StrictMode>,
+    );
+    (window as any).__BUILDHAUL_MOUNTED__ = true;
+  } catch (err: any) {
+    console.error('Fatal mount error:', err);
+    rootElement.innerHTML = `
+      <div style="min-height: 100vh; background-color: #0a0a0a; color: #f5f5f5; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: system-ui, sans-serif;">
+        <div style="max-width: 480px; background: #171717; border: 1px solid #333; border-radius: 16px; padding: 32px;">
+          <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">Initialization Issue</h2>
+          <p style="font-size: 13px; color: #a3a3a3; margin-bottom: 20px;">${err?.message || 'Could not mount BuildHaul.'}</p>
+          <button onclick="localStorage.clear(); sessionStorage.clear(); window.location.reload();" style="padding: 10px 20px; background: #f59e0b; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">
+            Clear Cache & Reload
+          </button>
+        </div>
+      </div>
+    `;
+  }
 }

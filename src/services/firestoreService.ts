@@ -16,25 +16,15 @@ import {
   INITIAL_PROJECTS 
 } from '../data/mockData';
 
-// Helper to write to database(s) - ensuring data appears regardless of which database dropdown is selected in Firebase Console
+// Helper to write to database(s) - ensuring data appears in Firebase Firestore
 async function writeWithFallback(collectionName: string, docId: string, data: any) {
   let primarySuccess = false;
 
-  // 1. Write to named provisioned database
   try {
     await setDoc(doc(db, collectionName, docId), data, { merge: true });
     primarySuccess = true;
   } catch (err) {
-    console.warn(`[Firestore named DB] Write to ${collectionName}/${docId}:`, err);
-  }
-
-  // 2. Also write to default database if distinct, so it appears in Firebase console (default) view too
-  if (firebaseConfig.firestoreDatabaseId) {
-    try {
-      await setDoc(doc(defaultDb, collectionName, docId), data, { merge: true });
-    } catch {
-      // Ignore if (default) database does not exist in project
-    }
+    console.warn(`[Firestore DB] Write to ${collectionName}/${docId}:`, err);
   }
 
   return primarySuccess;
@@ -71,59 +61,74 @@ export const FirestoreService = {
 
   // Seed all initial data so Firebase Console immediately displays collections and documents
   async seedAllDataToFirestore(): Promise<{ users: number; vehicles: number; bookings: number; projects: number }> {
-    console.log('[Firestore] Seeding initial data to Firebase database...');
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('buildhaul_firestore_seeded_v3')) {
+        return { users: 0, vehicles: 0, bookings: 0, projects: 0 };
+      }
+    } catch (e) {
+      // Continue if localStorage not accessible
+    }
+
+    console.log('[Firestore] Seeding initial data to Firebase database in background...');
     let usersCount = 0;
     let vehiclesCount = 0;
     let bookingsCount = 0;
     let projectsCount = 0;
 
-    // 1. System status document
-    await writeWithFallback('system', 'status', {
-      connected: true,
-      app: 'BuildHaul Construction Equipment Marketplace',
-      projectId: firebaseConfig.projectId,
-      firestoreDatabaseId: firebaseConfig.firestoreDatabaseId,
-      lastSync: new Date().toISOString(),
-      status: 'Active'
-    });
-
-    // 2. Seed Users
-    for (const u of INITIAL_USERS) {
-      await writeWithFallback('users', u.id, {
-        ...u,
-        updatedAt: new Date().toISOString()
+    try {
+      // 1. System status document
+      await writeWithFallback('system', 'status', {
+        connected: true,
+        app: 'BuildHaul Construction Equipment Marketplace',
+        projectId: firebaseConfig.projectId,
+        firestoreDatabaseId: firebaseConfig.firestoreDatabaseId,
+        lastSync: new Date().toISOString(),
+        status: 'Active'
       });
-      usersCount++;
+
+      // 2. Seed Users
+      for (const u of INITIAL_USERS) {
+        await writeWithFallback('users', u.id, {
+          ...u,
+          updatedAt: new Date().toISOString()
+        });
+        usersCount++;
+      }
+
+      // 3. Seed Vehicles
+      for (const v of INITIAL_VEHICLES) {
+        await writeWithFallback('vehicles', v.id, {
+          ...v,
+          updatedAt: new Date().toISOString()
+        });
+        vehiclesCount++;
+      }
+
+      // 4. Seed Bookings
+      for (const b of INITIAL_BOOKINGS) {
+        await writeWithFallback('bookings', b.id, {
+          ...b,
+          updatedAt: new Date().toISOString()
+        });
+        bookingsCount++;
+      }
+
+      // 5. Seed Projects
+      for (const p of INITIAL_PROJECTS) {
+        await writeWithFallback('projects', p.id, {
+          ...p,
+          updatedAt: new Date().toISOString()
+        });
+        projectsCount++;
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('buildhaul_firestore_seeded_v3', 'true');
+      }
+    } catch (err) {
+      console.warn('[Firestore] Background seeding note:', err);
     }
 
-    // 3. Seed Vehicles
-    for (const v of INITIAL_VEHICLES) {
-      await writeWithFallback('vehicles', v.id, {
-        ...v,
-        updatedAt: new Date().toISOString()
-      });
-      vehiclesCount++;
-    }
-
-    // 4. Seed Bookings
-    for (const b of INITIAL_BOOKINGS) {
-      await writeWithFallback('bookings', b.id, {
-        ...b,
-        updatedAt: new Date().toISOString()
-      });
-      bookingsCount++;
-    }
-
-    // 5. Seed Projects
-    for (const p of INITIAL_PROJECTS) {
-      await writeWithFallback('projects', p.id, {
-        ...p,
-        updatedAt: new Date().toISOString()
-      });
-      projectsCount++;
-    }
-
-    console.log(`[Firestore] Seed complete: ${usersCount} users, ${vehiclesCount} vehicles, ${bookingsCount} bookings, ${projectsCount} projects.`);
     return { users: usersCount, vehicles: vehiclesCount, bookings: bookingsCount, projects: projectsCount };
   },
 
